@@ -2,39 +2,1249 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0 user-scalable=no">
     <title>Telegram Mini App</title>
     <script src="https://telegram.org/js/telegram-web-app.js"></script>
     <style>
         body {
             font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
-            margin: 0;
-            padding: 20px;
             color: var(--tg-theme-text-color, #000);
             background: var(--tg-theme-bg-color, #fff);
         }
-        .container {
-            max-width: 600px;
-            margin: 0 auto;
-        }
-        h1 {
+        h3 {
             text-align: center;
-            color: var(--tg-theme-button-color, #2481cc);
+        }
+        h4 {
+            text-align: center;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            margin-top: 0px;
+        }
+        .main-container {
+            height: var(--app-height, 100vh);
+        }
+        .header-container {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100vw;
+            height: 20px; /* твоя высота */
+            background: #2481cc;
+            z-index: 10;
+            display: none;            
+            background-color: #2481cc;
+            text-align: center;
+            font-size: 10px;
+        }
+        .header-container.visible {
+            display: block;
+        }
+        .footer-container {
+            position: fixed;
+            bottom: 0; 
+            left: 0;
+            width: 100vw;
+            height: 60px; /* твоя высота */
+            background: #2481cc;
+            z-index: 10;
+            display: none;
+            background-color: #2481cc;
+            text-align: center;
+            font-size: 10px;
+        }
+        .footer-container.visible {
+            display: block;
+        }
+        .not-telegram {
+            display: none;
+            height: 0px;
+            text-align: center;
+            margin-top: 50px;
+            color: red;
+            font-weight: bold;
+        }
+        .admin-buttons {
+            position: fixed;
+            display: none;
+            text-align: center;
+            top: 20px;
+            left: 0;
+            right: 0;
+            width: 100vw;
+            height: 70px;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+        }
+        .admin-buttons.visible {
+            display: block;
+        }
+        .admin-button {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border: none;
+            /* padding: 10px 20px; */
+            /* margin: 5px; */
+            border-radius: 8px;
+            cursor: pointer;
+            height: 30px;
+            width: 80px;
+        }
+        .bet-button {
+            background: var(--tg-theme-button-color, #2481cc);
+            color: var(--tg-theme-button-text-color, #fff);
+            border-radius: 8px;
+            cursor: pointer;
+            height: 30px;
+            width: 30px;
+            border: none;
+        }
+        .bet-button:disabled {
+            background: var(--tg-theme-hint-color, #999);
+            color: #666;
+            cursor: not-allowed;
+        }
+        .matches-section {
+            position: absolute;
+            top: 90px; /* = header height */
+            bottom: 60px; /* = footer height */
+            left: 0;
+            right: 0;
+            overflow-y: auto;
+            -webkit-overflow-scrolling: touch;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            display: flex;
+            flex-direction: column;
+            overflow-y: auto;
+            background-color: #2481cc;
+        }
+        .matches-list {
+            flex-grow: 1;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+        }
+        .match-card {
+            background: var(--tg-theme-bg-color, #fff);
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            border-radius: 8px;
+            padding: 2px;
+            margin-bottom: 15px;
+        }
+        .match-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 10px;
+        }
+        .match-teams {
+            font-weight: bold;
+            margin-bottom: 10px;
+        }
+        .match-date {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+        }
+        .match-tournament {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+            /* margin-bottom: 10px; */
+        }
+        .match-status {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+            display: flex;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+        }
+        .match-bet {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            flex-grow: 1;
+        }
+        .match-score {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            flex-grow: 1;
+        }
+        .match-points {
+            color: var(--tg-theme-hint-color, #999);
+            font-size: 0.9em;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            flex-grow: 1;
+        }
+        .bet-form {
+            display: flex;
+            /* display: flex;
+            justify-items: center; */
+            /* align-items: center; */
+            gap: 10px;
+            /* margin-top: 10px; */
+        }
+        .bet-input {
+            width: 30px;
+            padding: 5px;
+            border: 1px solid var(--tg-theme-hint-color, #999);
+            border-radius: 4px;
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background: var(--tg-theme-bg-color, #fff);
+            color: var(--tg-theme-text-color, #000);
+        }
+        .bet-input:focus {
+            outline: none;
+            border-color: var(--tg-theme-button-color, #2481cc);
+        }
+        .bet-separator {
+            font-weight: bold;
+        }      
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+        }
+        .modal.visible {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .modal-content {
+            display: flex;
+            flex-direction: column;
+            background: var(--tg-theme-bg-color, #fff);
+            padding: 20px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            max-height: 50%;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+        }
+        .form-group input, .form-group select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 20px;
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>Добро пожаловать в Mini App</h1>
-        <div id="app">
-            <!-- Здесь будет ваш контент -->
+    <div id="main-container" class="main-container">
+        <div id="header-container" class="header-container">
+            <p id="header-content"></p>
+        </div>
+
+        <div id="admin-buttons" style="display: none;">
+            <button class="admin-button" onclick="openTournamentForm()">Добавить турнир</button>
+            <button class="admin-button" onclick="openMatchForm()">Добавить матч</button>
+            <button class="admin-button" onclick="openTeamForm()">Добавить команду</button>
+            <button class="admin-button" onclick="openApproveForm()">Одобрить участие</button>
+            <button class="admin-button" onclick="openParticipateForm()">Участвовать в турнире</button>
+            <button class="admin-button" onclick="openSubmitScoreForm()">Внести результат</button>
+        </div>
+
+        <div id="matches-section" class="matches-section" style="display: none;">
+            <h4>Мои матчи</h4>
+            <div id="matches-list" class="matches-list">
+            </div>
+        </div>
+
+        <div id="footer-container" class="footer-container">
+            <p id="footer-content"></p>
+        </div>
+
+        <div id="not-telegram" class="not-telegram" style="display: none;">
+            Пожалуйста, откройте эту страницу внутри Telegram.
+        </div> 
+
+        <div id="tournament-modal" class="modal">
+            <div class="modal-content">
+                <h2>Добавить турнир</h2>
+                <form id="tournament-form">
+                    <div class="form-group">
+                        <label for="tournament-name">Название турнира</label>
+                        <input type="text" id="tournament-name" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="admin-button" id="tournament-cancel">Отмена</button>
+                        <button type="submit" class="admin-button">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="match-modal" class="modal">
+            <div class="modal-content">
+                <h2>Добавить матч</h2>
+                <form id="match-form">
+                    <div class="form-group">
+                        <label for="match-tournament">Турнир</label>
+                        <select id="match-tournament" required>
+                            <option value="">Выберите турнир</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="match-team1">Команда 1</label>
+                        <select id="match-team1" required>
+                            <option value="">Выберите команду</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="match-team2">Команда 2</label>
+                        <select id="match-team2" required>
+                            <option value="">Выберите команду</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="match-date">Дата</label>
+                        <input type="datetime-local" id="match-date" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="admin-button" id="match-cancel">Отмена</button>
+                        <button type="submit" class="admin-button">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="team-modal" class="modal">
+            <div class="modal-content">
+                <h2>Добавить команду</h2>
+                <form id="team-form">
+                    <div class="form-group">
+                        <label for="team-name">Название команды</label>
+                        <input type="text" id="team-name" required>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="admin-button" id="team-cancel">Отмена</button>
+                        <button type="submit" class="admin-button">Сохранить</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="participate-modal" class="modal">
+            <div class="modal-content">
+                <h2>Участие в турнире</h2>
+                <form id="participate-form">
+                    <div class="form-group">
+                        <label for="participate-tournament">Выберите турнир</label>
+                        <select id="participate-tournament" required>
+                            <option value="">Выберите турнир</option>
+                        </select>
+                    </div>
+                    <div class="modal-buttons">
+                        <button type="button" class="admin-button" id="participate-cancel">Отмена</button>
+                        <button type="submit" class="admin-button">Подать заявку</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <div id="submit-score-modal" class="modal">
+            <div class="modal-content">
+                <h2>Внести результат</h2>
+                <div id="pending-matches" class="matches-section">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="admin-button" onclick="closeSubmitScoreForm()">Закрыть</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="approve-modal" class="modal">
+            <div class="modal-content">
+                <h2>Одобрение участия</h2>
+                <div id="pending-participations">
+                </div>
+                <div class="modal-buttons">
+                    <button type="button" class="admin-button" onclick="closeApproveForm()">Закрыть</button>
+                </div>
+            </div>
         </div>
     </div>
 
     <script>
-        let tg = window.Telegram.WebApp;
-        tg.expand(); // Расширяем на весь экран
-        tg.ready(); // Сообщаем телеграму что приложение готово
+        let tournamentsCache = null;
+        let teamsCache = null;
+        let participationsCache = null;
+        let jwtToken = null;
+        let isAuthenticated = false;
+        let isAdmin = false;
+
+        function setAppHeight() {
+            // Отнимаем лишнее, если нужно, но обычно просто innerHeight
+            document.documentElement.style.setProperty('--app-height', window.innerHeight + 'px');
+        }
+        // Cache invalidation functions
+        function invalidateTournamentsCache() {
+            tournamentsCache = null;
+            console.log('Tournaments cache invalidated');
+        }
+
+        function invalidateTeamsCache() {
+            teamsCache = null;
+            console.log('Teams cache invalidated');
+        }
+
+        function invalidateParticipationsCache() {
+            participationsCache = null;
+            console.log('Participations cache invalidated');
+        }
+
+        function resetAllCaches() {
+            invalidateTournamentsCache();
+            invalidateTeamsCache();
+            invalidateParticipationsCache();
+            console.log('All caches reset');
+        }
+
+        // Функции загрузки данных
+        async function loadTournaments() {
+            console.log('Loading tournaments');
+            try {
+                const response = await fetch('/tournaments', {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                console.log('Tournaments loaded:', data);
+                if (!data.tournaments || data.tournaments.length === 0) {
+                    alert('Список турниров пуст');
+                }
+                return data.tournaments;
+            } catch (error) {
+                console.error('Error loading tournaments:', error);
+                alert('Ошибка загрузки турниров: ' + error.message);
+                return [];
+            }
+        }
+
+        async function loadTeams() {
+            console.log('Loading teams');
+            try {
+                const response = await fetch('/teams', {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                console.log('Teams loaded:', data);
+                if (!data.teams || data.teams.length === 0) {
+                    alert('Список команд пуст');
+                }
+                return data.teams;
+            } catch (error) {
+                console.error('Error loading teams:', error);
+                alert('Ошибка загрузки команд: ' + error.message);
+                return [];
+            }
+        }
+
+        async function loadParticipations() {
+            try {
+                const response = await fetch('/pending-participations', {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                return data.participations;
+            } catch (error) {
+                console.error('Error loading participations:', error);
+                return [];
+            }
+        }
+
+        async function loadMatches() {
+            try {
+                const response = await fetch('/pending-matches', {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                return data.matches;
+            } catch (error) {
+                console.error('Error loading participations:', error);
+                return [];
+            }
+        }        
+
+        function populateSelect(select, items, valueKey = 'id', textKey = 'name_ru') {
+            console.log('Populating select with items:', items);
+            select.innerHTML = `<option value="">Выберите...</option>`;
+            items.forEach(item => {
+                const option = document.createElement('option');
+                option.value = item[valueKey];
+                option.textContent = item[textKey];
+                select.appendChild(option);
+            });
+        }
+
+        // Глобальные функции для работы с формами
+        async function openTournamentForm() {
+            console.log('Opening tournament form');
+            document.getElementById('tournament-modal').classList.add('visible');
+        }
+
+        function closeTournamentForm() {
+            console.log('Closing tournament form');
+            document.getElementById('tournament-modal').classList.remove('visible');
+        }
+
+        async function openMatchForm() {
+            console.log('Opening match form');
+            try {
+                const [tournaments, teams] = await Promise.all([
+                    loadTournaments(),
+                    loadTeams()
+                ]);
+
+                alert(`Загружено турниров: ${tournaments.length}, команд: ${teams.length}`);
+
+                populateSelect(document.getElementById('match-tournament'), tournaments);
+                populateSelect(document.getElementById('match-team1'), teams);
+                populateSelect(document.getElementById('match-team2'), teams);
+
+                document.getElementById('match-modal').classList.add('visible');
+            } catch (error) {
+                console.error('Error loading match form data:', error);
+                alert('Ошибка при загрузке данных: ' + error.message);
+            }
+        }
+
+        function closeMatchForm() {
+            console.log('Closing match form');
+            document.getElementById('match-modal').classList.remove('visible');
+        }
+
+        function openTeamForm() {
+            console.log('Opening team form');
+            document.getElementById('team-modal').classList.add('visible');
+        }
+
+        function closeTeamForm() {
+            console.log('Closing team form');
+            document.getElementById('team-modal').classList.remove('visible');
+        }
+
+        async function openParticipateForm() {
+            console.log('Opening participate form');
+            try {
+                const tournaments = await loadTournaments();
+                populateSelect(document.getElementById('participate-tournament'), tournaments);
+                document.getElementById('participate-modal').classList.add('visible');
+            } catch (error) {
+                console.error('Error loading participate form data:', error);
+                alert('Ошибка при загрузке данных: ' + error.message);
+            }
+        }
+
+        function closeParticipateForm() {
+            console.log('Closing participate form');
+            document.getElementById('participate-modal').classList.remove('visible');
+        }
+
+        async function openApproveForm() {
+            console.log('Opening approve form');
+            try {
+                await loadPendingParticipations();
+                document.getElementById('approve-modal').classList.add('visible');
+            } catch (error) {
+                console.error('Error loading approve form data:', error);
+                alert('Ошибка при загрузке данных: ' + error.message);
+            }
+        }
+
+        function closeApproveForm() {
+            console.log('Closing approve form');
+            document.getElementById('approve-modal').classList.remove('visible');
+        }
+
+        async function openSubmitScoreForm() {
+            console.log('Opening summit result form');
+            try {
+                await loadPendingMatches();
+                document.getElementById('submit-score-modal').classList.add('visible');
+            } catch (error) {
+                console.error('Error summit result form data:', error);
+                alert('Ошибка при загрузке данных: ' + error.message);
+            }
+        }
+
+        function closeSubmitScoreForm() {
+            console.log('Closing submit form');
+            document.getElementById('submit-score-modal').classList.remove('visible');
+        }
+
+        async function loadPendingParticipations() {
+            const participations = await loadParticipations();
+            const container = document.getElementById('pending-participations');
+            container.innerHTML = '';
+            
+            participations.forEach(participation => {
+                const div = document.createElement('div');
+                div.className = 'participation-item';
+                div.innerHTML = `
+                    <p>Пользователь: ${participation.user_name}</p>
+                    <p>Турнир: ${participation.tournament_name}</p>
+                    <button onclick="approveParticipation(${participation.id})" class="admin-button">Одобрить</button>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        async function loadPendingMatches() {
+            const matches = await loadMatches();
+            const matchesSection = document.getElementById('pending-matches');
+
+            const matchesList = document.createElement('div');
+            matchesList.className = 'matches-list';
+            matchesSection.appendChild(matchesList);
+
+            matches.forEach(match => {
+                const matchCard = document.createElement('div');
+                matchCard.className = 'match-card';
+
+                const matchHeader = document.createElement('div');
+                matchHeader.className = "match-header";
+                matchCard.appendChild(matchHeader);
+
+                const matchTournamentName = document.createElement('div');
+                matchTournamentName.className = "match-tournament";
+                matchTournamentName.textContent = match.tournament_name;
+                matchHeader.appendChild(matchTournamentName);
+
+                const matchDateTime = document.createElement('div');
+                matchDateTime.className = "match-date";
+                matchDateTime.textContent = formatDate(match.date);
+                matchHeader.appendChild(matchDateTime);
+
+                const matchTeams = document.createElement('div');
+                matchTeams.className = "match-teams";
+                matchTeams.textContent = match.team_1_name + " vs " + match.team_2_name;
+                matchCard.appendChild(matchTeams);
+
+                const matchScore = document.createElement('div');
+                matchScore.className = "match-score";
+                matchCard.appendChild(matchScore);
+
+                const matchScoreHeader = document.createElement('h4');
+                matchScoreHeader.textContent = "Результат";
+                matchScore.appendChild(matchScoreHeader);
+
+                const form = document.createElement('form');
+                form.className = 'score-form';
+
+                // Первый select для score1
+                const score1Select = document.createElement('select');
+                score1Select.id = `score1-${match.id}`;
+                score1Select.className = 'score-input';
+                score1Select.required = true;
+
+                // Добавляем пустой option
+                let option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-';
+                score1Select.appendChild(option);
+
+                // Добавляем опции 0-9
+                for (let i = 0; i < 10; i++) {
+                    option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    if (match.score1 && match.score_1 == i) option.selected = true;
+                    score1Select.appendChild(option);
+                }
+                form.appendChild(score1Select);
+
+                // Разделитель :
+                const separator = document.createElement('span');
+                separator.className = 'score-separator';
+                separator.textContent = ':';
+                form.appendChild(separator);
+
+                // Второй select для score2
+                const score2Select = document.createElement('select');
+                score2Select.id = `score2-${match.id}`;
+                score2Select.className = 'score-input';
+                score2Select.required = true;
+
+                // Добавляем пустой option
+                option = document.createElement('option');
+                option.value = '';
+                option.textContent = '-';
+                score2Select.appendChild(option);
+
+                // Добавляем опции 0-9
+                for (let i = 0; i < 10; i++) {
+                    option = document.createElement('option');
+                    option.value = i;
+                    option.textContent = i;
+                    if (match.score2 && match.score_2 == i) option.selected = true;
+                    score2Select.appendChild(option);
+                }
+                form.appendChild(score2Select);
+
+                // Кнопка edit
+                const buttonEdit = document.createElement('button');
+                buttonEdit.type = 'edit';
+                buttonEdit.className = 'bet-button';
+                buttonEdit.textContent = 'И';
+                form.appendChild(buttonEdit);
+
+                // Кнопка submit
+                const buttonSubmit = document.createElement('button');
+                buttonSubmit.type = 'submit';
+                buttonSubmit.className = 'bet-button';
+                buttonSubmit.textContent = 'С';
+                form.appendChild(buttonSubmit);
+
+                // Отмена стандартной отправки и вызов saveBet с нужными параметрами
+                form.onsubmit = function(event) {
+                    event.preventDefault();
+                    saveBet(
+                        match.id,
+                        score1Select.value,
+                        score2Select.value
+                    );
+                    buttonEdit.disabled = false;
+                    buttonSubmit.disabled = true;
+                };
+
+                buttonEdit.onclick = function(event) {
+                    alert("buttonEdit");
+                    event.preventDefault();
+                    buttonEdit.disabled = true;
+                    buttonSubmit.disabled = false;
+                    score1Select.disabled = false;
+                    score2Select.disabled = false;
+                }
+
+                if (score1Select.value == '' || score2Select.value == '') {
+                    buttonEdit.disabled = true;
+                    buttonSubmit.disabled = false;
+                } else {
+                    score1Select.disabled = true;
+                    score2Select.disabled = true;
+                    buttonEdit.disabled = false;
+                    buttonSubmit.disabled = true;
+                }
+                matchScore.appendChild(form);
+
+                matchesList.appendChild(matchCard);
+            });
+        }
+
+        async function approveParticipation(participationId) {
+            try {
+                const response = await fetch('/approve-participation', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ participation_id: participationId })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await loadPendingParticipations();
+                }
+            } catch (error) {
+                console.error('Error:', error);
+                alert('Произошла ошибка при одобрении участия');
+            }
+        }
+
+        // Функции для работы с матчами
+        async function displayMatches() {
+            try {
+                const response = await fetch('/user-matches', {
+                    headers: {
+                        'Authorization': `Bearer ${jwtToken}`
+                    }
+                });
+                const data = await response.json();
+                
+                if (!data.success) {
+                    throw new Error('Failed to load matches');
+                }
+
+                const matches = data.matches;
+                // Сортируем матчи по дате
+                matches.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+                const matchesList = document.getElementById('matches-list');
+                matchesList.innerHTML = '';
+
+                matches.forEach(match => {
+                    const isFuture = isMatchInFuture(match.date);
+
+                    const matchCard = document.createElement('div');
+                    matchCard.className = 'match-card';
+
+                    const matchHeader = document.createElement('div');
+                    matchHeader.className = "match-header";
+                    matchCard.appendChild(matchHeader);
+                    
+                    const matchTournamentName = document.createElement('div');
+                    matchTournamentName.className = "match-tournament";
+                    matchTournamentName.textContent = match.tournament_name;
+                    matchHeader.appendChild(matchTournamentName);
+                    
+                    const matchDateTime = document.createElement('div');
+                    matchDateTime.className = "match-date";
+                    matchDateTime.textContent = formatDate(match.date);
+                    matchHeader.appendChild(matchDateTime);
+                    
+                    const matchTeams = document.createElement('div');
+                    matchTeams.className = "match-teams";
+                    matchTeams.textContent = match.team_1_name + " vs " + match.team_2_name;
+                    matchCard.appendChild(matchTeams);
+
+                    const matchStatus = document.createElement('div');
+                    matchStatus.className = "match-status";
+                    matchCard.appendChild(matchStatus);
+
+                    const matchBet = document.createElement('div');
+                    matchBet.className = "match-bet";
+                    matchStatus.appendChild(matchBet);
+
+                    const matchBetHeader = document.createElement('h4');
+                    matchBetHeader.textContent = "Ставка";
+                    matchBet.appendChild(matchBetHeader);
+
+                    const form = document.createElement('form');
+                    form.className = 'bet-form';
+
+                    // Первый select для score1
+                    const score1Select = document.createElement('select');
+                    score1Select.id = `score1-${match.id}`;
+                    score1Select.className = 'bet-input';
+                    score1Select.required = true;
+
+                    // Добавляем пустой option
+                    let option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '-';
+                    score1Select.appendChild(option);
+
+                    // Добавляем опции 0-9
+                    for (let i = 0; i < 10; i++) {
+                        option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i;
+                        if (match.bet && match.bet.score_1 == i) option.selected = true;
+                        score1Select.appendChild(option);
+                    }
+                    form.appendChild(score1Select);
+
+                    // Разделитель :
+                    const separator = document.createElement('span');
+                    separator.className = 'bet-separator';
+                    separator.textContent = ':';
+                    form.appendChild(separator);
+
+                    // Второй select для score2
+                    const score2Select = document.createElement('select');
+                    score2Select.id = `score2-${match.id}`;
+                    score2Select.className = 'bet-input';
+                    score2Select.required = true;
+
+                    // Добавляем пустой option
+                    option = document.createElement('option');
+                    option.value = '';
+                    option.textContent = '-';
+                    score2Select.appendChild(option);
+
+                    // Добавляем опции 0-9
+                    for (let i = 0; i < 10; i++) {
+                        option = document.createElement('option');
+                        option.value = i;
+                        option.textContent = i;
+                        if (match.bet && match.bet.score_2 == i) option.selected = true;
+                        score2Select.appendChild(option);
+                    }
+                    form.appendChild(score2Select);
+
+                    // Кнопка edit
+                    const buttonEdit = document.createElement('button');
+                    buttonEdit.type = 'edit';
+                    buttonEdit.className = 'bet-button';
+                    buttonEdit.textContent = 'И';
+                    form.appendChild(buttonEdit);
+
+                    // Кнопка submit
+                    const buttonSubmit = document.createElement('button');
+                    buttonSubmit.type = 'submit';
+                    buttonSubmit.className = 'bet-button';
+                    buttonSubmit.textContent = 'С';
+                    form.appendChild(buttonSubmit);
+
+                    // Отмена стандартной отправки и вызов saveBet с нужными параметрами
+                    form.onsubmit = function(event) {
+                        event.preventDefault();
+                        saveBet(
+                            match.id,
+                            score1Select.value,
+                            score2Select.value
+                        );
+                        buttonEdit.disabled = false;
+                        buttonSubmit.disabled = true;
+                    };
+
+                    buttonEdit.onclick = function(event) {
+                        alert("buttonEdit");
+                        event.preventDefault();
+                        buttonEdit.disabled = true;
+                        buttonSubmit.disabled = false;
+                        score1Select.disabled = false;
+                        score2Select.disabled = false;
+                    }
+
+                    if (!isFuture) {
+                        score1Select.disabled = true;
+                        score2Select.disabled = true;
+                        buttonEdit.disabled = true;
+                        buttonSubmit.disabled = true;
+                    } else if (score1Select.value == '' || score2Select.value == '') {
+                        buttonEdit.disabled = true;
+                        buttonSubmit.disabled = false;
+                    } else {
+                        score1Select.disabled = true;
+                        score2Select.disabled = true;
+                        buttonEdit.disabled = false;
+                        buttonSubmit.disabled = true;
+                    }
+                    matchBet.appendChild(form);
+
+                    // Resuls
+
+                    const matchScore = document.createElement('div');
+                    matchScore.className = "match-score";
+                    matchStatus.appendChild(matchScore);
+                    
+                    const matchScoreHeader = document.createElement('h4');
+                    matchScoreHeader.textContent = "Результат";
+                    matchScore.appendChild(matchScoreHeader);
+                    
+                    const matchScoreText = document.createElement('h3');
+                    if (match.score1 && match.score2) {
+                        matchScoreText.textContent = match.score1 + ' : ' + match.score2;
+                    } else {
+                        matchScoreText.textContent = '? : ?';
+                    }
+                    matchScore.appendChild(matchScoreText);
+                    
+                    const matchPoints = document.createElement('div');
+                    matchPoints.className = "match-points";
+                    
+                    const matchPointsHeader = document.createElement('h4');
+                    matchPointsHeader.textContent = "Очки";
+                    matchPoints.appendChild(matchPointsHeader);
+                    
+                    const matchPointsText = document.createElement('h3');
+                    matchPointsText.textContent = "?"
+                    matchPoints.appendChild(matchPointsText);
+                    
+                    matchStatus.appendChild(matchPoints);
+
+                    matchesList.appendChild(matchCard);
+                });
+            } catch (error) {
+                console.error('Error loading matches:', error);
+                alert('Ошибка при загрузке матчей');
+            }
+        }
+
+        function formatDate(dateString) {
+            const date = new Date(dateString);
+            return date.toLocaleString('ru-RU', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        function isMatchInFuture(dateString) {
+            return new Date(dateString) > new Date();
+        }
+
+        async function saveBet(matchId, score1, score2) {
+            try {
+                const response = await fetch('/place-bet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${jwtToken}`
+                    },
+                    body: JSON.stringify({
+                        match_id: matchId,
+                        score_1: score1,
+                        score_2: score2
+                    })
+                });
+                const data = await response.json();
+                if (data.success) {
+                    await displayMatches(); // Обновляем отображение матчей
+                } else {
+                    alert('Ошибка при сохранении ставки');
+                }
+            } catch (error) {
+                console.error('Error saving bet:', error);
+                alert('Ошибка при сохранении ставки');
+            }
+        }
+
+        // Проверяем, что страница открыта в Telegram WebApp
+        const tg = window.Telegram?.WebApp;
+        // Modified check to be less strict for desktop Telegram
+        const isInTelegram = Boolean(tg);
+        if (!isInTelegram) {
+            // Страница открыта не в Telegram - показываем предупреждение
+            document.getElementById('not-telegram').style.display = 'block';
+        } else {
+            // Telegram доступен — продолжаем инициализацию
+            // Сбрасываем кэш при инициализации
+            resetAllCaches();
+            setAppHeight(); // сразу при загрузке
+            
+            window.addEventListener('resize', function() {
+                setAppHeight();
+                const el1 = document.getElementById('main-container');
+                const rect1 = el1.getBoundingClientRect();
+                // alert(
+                //     `Top: ${rect1.top}\nLeft: ${rect1.left}\nWidth: ${rect1.width}\nHeight: ${rect1.height}`
+                // );
+            });
+            window.addEventListener('focusin', () => window.scrollTo(0, 0));
+            window.addEventListener('focusout', () => window.scrollTo(0, 0));
+
+            // Try to get initData, but don't require it
+            const initData = tg.initData || '';
+            fetch('/init', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ initData: initData })
+            })
+            .then(response => response.json())
+            .then(data => {
+                isAuthenticated = data.authenticated;
+                jwtToken = data.token;
+                isAdmin = data.is_admin;
+                updateUI();
+            })
+            .catch(error => {
+                alert('Error during initialization: ' + error.message);
+                isAuthenticated = false;
+                updateUI();
+            });
+
+            // Добавляем обработчик закрытия приложения
+            tg.onEvent('viewportChanged', function() {
+                if (!tg.isExpanded) {
+                    // Приложение свернуто - сбрасываем кэш
+                    resetAllCaches();
+                }
+            });
+
+            // Добавляем обработчик видимости страницы
+            document.addEventListener('visibilitychange', function() {
+                if (document.hidden) {
+                    // Страница скрыта - сбрасываем кэш
+                    resetAllCaches();
+                }
+            });
+
+            function updateUI() {
+                const headerContainer = document.getElementById('header-container');
+                const headerContent = document.getElementById('header-content');
+                const adminButtons = document.getElementById('admin-buttons');
+                const matchesSection = document.getElementById('matches-section');
+                const footerContainer = document.getElementById('footer-container');
+                const footerContent = document.getElementById('footer-content');
+
+                if (isAuthenticated) {
+                    headerContent.textContent = 'Я тебя знаю';
+                    footerContent.textContent = 'Я тебя знаю';
+                    adminButtons.classList.add('visible');
+                    matchesSection.style.display = 'block';
+                    displayMatches(); // Загружаем матчи при инициализации
+                    
+                    if (isAdmin) {
+                        adminButtons.style.display = 'block';
+                    }
+                } else {
+                    headerContent.textContent = 'Я тебя не знаю';
+                    adminButtons.classList.remove('visible');
+                    matchesSection.style.display = 'none';
+                }
+
+                headerContainer.classList.add('visible');
+                footerContainer.classList.add('visible');
+            }
+
+
+            // Add event listeners for form submissions
+            document.getElementById('tournament-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('Tournament form submitted');
+                
+                const tournamentData = {
+                    name_ru: document.getElementById('tournament-name').value
+                };
+
+                try {
+                    console.log('Sending tournament data:', tournamentData);
+                    const response = await fetch('/add_tournament', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${jwtToken}`
+                        },
+                        body: JSON.stringify(tournamentData)
+                    });
+                    const data = await response.json();
+                    console.log('Server response:', data);
+                    
+                    if (data.success) {
+                        closeTournamentForm();
+                        document.getElementById('tournament-form').reset();
+                    } else {
+                        alert('Ошибка при добавлении турнира');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ошибка при добавлении турнира');
+                }
+            });
+
+            document.getElementById('match-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                console.log('Match form submitted');
+                
+                const matchData = {
+                    tournament_id: document.getElementById('match-tournament').value,
+                    team_1_id: document.getElementById('match-team1').value,
+                    team_2_id: document.getElementById('match-team2').value,
+                    date: document.getElementById('match-date').value
+                };
+
+                try {
+                    console.log('Sending match data:', matchData);
+                    const response = await fetch('/add_match', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${jwtToken}`
+                        },
+                        body: JSON.stringify(matchData)
+                    });
+                    const data = await response.json();
+                    console.log('Server response:', data);
+                    
+                    if (data.success) {
+                        closeMatchForm();
+                        document.getElementById('match-form').reset();
+                    } else {
+                        alert('Ошибка при добавлении матча');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ошибка при добавлении матча');
+                }
+            });
+
+            document.getElementById('team-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const teamData = {
+                    name_ru: document.getElementById('team-name').value
+                };
+
+                try {
+                    const response = await fetch('/add_team', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${jwtToken}`
+                        },
+                        body: JSON.stringify(teamData)
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        closeTeamForm();
+                        document.getElementById('team-form').reset();
+                        invalidateTeamsCache();
+                    } else {
+                        alert('Ошибка при добавлении команды');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Ошибка при добавлении команды');
+                }
+            });
+
+            document.getElementById('participate-form').addEventListener('submit', async function(e) {
+                e.preventDefault();
+                const tournamentId = document.getElementById('participate-tournament').value;
+                
+                try {
+                    const response = await fetch('/participate', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${jwtToken}`,
+                            'Content-Type': 'application/json'
+                        },
+                        body: JSON.stringify({ tournament_id: tournamentId })
+                    });
+                    const data = await response.json();
+                    if (data.success) {
+                        closeParticipateForm();
+                    } else {
+                        alert(data.message || 'Произошла ошибка');
+                    }
+                } catch (error) {
+                    console.error('Error:', error);
+                    alert('Произошла ошибка');
+                }
+            });
+
+            // Add event listeners for cancel buttons
+            document.getElementById('tournament-cancel').addEventListener('click', function() {
+                console.log('Tournament cancel clicked');
+                closeTournamentForm();
+            });
+            document.getElementById('match-cancel').addEventListener('click', closeMatchForm);
+            document.getElementById('team-cancel').addEventListener('click', closeTeamForm);
+            document.getElementById('participate-cancel').addEventListener('click', closeParticipateForm);
+
+            tg.expand();
+            tg.ready();
+
+            // Add periodic refresh for pending participations
+            setInterval(() => {
+                if (document.getElementById('approve-modal').classList.contains('visible')) {
+                    loadPendingParticipations();
+                }
+            }, 30000); // Проверка каждые 30 секунд
+        }
     </script>
 </body>
-</html> 
+</html>
